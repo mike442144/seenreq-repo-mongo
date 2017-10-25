@@ -19,6 +19,7 @@ class MongoRepo extends Repo{
 
     initialize(callback){
 	MongoClient.connect(this.options.url).then(db=> {
+	    db.collection(this.options.collection).createIndex({key: 1},{unique:true});
 	    this.db=db;
 	    callback();
 	}).catch(callback);
