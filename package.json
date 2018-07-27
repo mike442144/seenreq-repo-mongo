@@ -4,7 +4,7 @@
   "description": "A mongodb repo adapter for seenreq",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --timeout=15000  ./test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +26,12 @@
   "homepage": "https://github.com/mike442144/seenreq-repo-mongo#readme",
   "dependencies": {
     "mongodb": "^2.2.33",
-    "seenreq":"^1.0.0"
+    "seenreq": "^1.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "rewire": "^4.0.1",
+    "sinon": "^6.1.3"
   }
 }
