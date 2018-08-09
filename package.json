@@ -1,6 +1,6 @@
 {
   "name": "seenreq-repo-mongo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A mongodb repo adapter for seenreq",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
   "homepage": "https://github.com/mike442144/seenreq-repo-mongo#readme",
   "dependencies": {
     "mongodb": "^2.2.33",
-    "seenreq":"^1.0.0"
+    "seenreq":"^2.0.0"
   },
  "devDependencies": {
     "chai": "^4.1.2",
