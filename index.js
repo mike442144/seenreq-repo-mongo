@@ -14,7 +14,7 @@ class MongoRepo extends Repo{
 		};
 		
 		this.options = Object.assign({},defaultOptions, options);
-		this.clearOnQuit = options.clearOnQuit !== false;
+		this.clearOnQuit = this.options.clearOnQuit !== false;
 	}
 
 	initialize(){
@@ -54,7 +54,10 @@ class MongoRepo extends Repo{
 	
 	dispose() {
 		if (this.clearOnQuit) {
-			return this.db.dropCollection(this.options.collection).then(() => this.db.close() );
+			return this.db.dropCollection(this.options.collection).then(() => this.db.close() ).catch( (e) => {
+				console.error(e);
+				this.db.close();
+			});
 		} else {
 			this.db.close();
 			return Promise.resolve();

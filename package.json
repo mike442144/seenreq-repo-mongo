@@ -1,6 +1,6 @@
 {
   "name": "seenreq-repo-mongo",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A mongodb repo adapter for seenreq",
   "main": "index.js",
   "scripts": {

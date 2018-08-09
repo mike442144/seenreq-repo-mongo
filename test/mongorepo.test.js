@@ -5,7 +5,6 @@ const rewire = require('rewire');
 const MongoRepo = rewire('../index.js');
 
 describe('mongo repo testing', ()=> {
-	let callback;
 	let mongoRepo;
 	let fakeMongo = null;
 	let fakeCollection;
@@ -16,9 +15,7 @@ describe('mongo repo testing', ()=> {
 		fakeCollection= {
 			createIndex: sinon.spy(), 
 			find: sinon.fake.returns(fakeFind), 
-			insertMany: function(docsToInsert, callback){
-				callback(docsToInsert);
-			},
+			insertMany: sinon.fake.resolves()
 		};
 
 		fakeDb= {
@@ -29,7 +26,6 @@ describe('mongo repo testing', ()=> {
 
 	beforeEach(()=>{
 		mongoRepo = new MongoRepo();
-		callback = sinon.spy();
 		fakeDb.close = sinon.spy();
 	});
 
@@ -62,91 +58,86 @@ describe('mongo repo testing', ()=> {
 		it('should initialize mongo db connection', (done)=>{
 			fakeMongo = {connect: sinon.fake.resolves(fakeDb) };
 			let mongoRestore = MongoRepo.__set__('MongoClient', fakeMongo);
-			mongoRepo.initialize(callback);
-			setTimeout(() => {
+			mongoRepo.initialize().then(() => {
 				expect(fakeDb.collection.calledOnce).to.be.true;
 				expect(fakeCollection.createIndex.calledOnce).to.be.true;
-				expect(callback.calledOnce).to.be.true;
-				expect(callback.getCall(0).args[0]).to.be.undefined;
-	
 				mongoRestore();
 				done();
-			}, 0);
+			});
 		});
 
 		it('should catch error if connect failed', (done)=>{
 			fakeMongo = {connect: sinon.fake.rejects(new Error('fake error')) };
 			let mongoRestore = MongoRepo.__set__('MongoClient', fakeMongo);
-			mongoRepo.initialize(callback);
-			setTimeout(() => {
-				expect(callback.calledOnce).to.be.true;
-				expect(callback.getCall(0).args[0]).to.be.an('error');
-
+			mongoRepo.initialize().catch(e => {
+				expect(e.message).to.eql('fake error');
 				mongoRestore();
 				done();
-			},0);
+			});
 		});
 	});
 
 	describe('getByKeys()', ()=>{
 		it('should get mongodb values', ()=>{
 			// mongoRepo.getByKeys(['key1'], callback);
-
+			
 		});
         
 	});
-
-
+	
 	describe('setByKeys()', ()=>{
 		it('should set mongodb values', (done)=>{
 			mongoRepo.db = fakeDb;
-			mongoRepo.setByKeys([], callback);
-			mongoRepo.setByKeys(['key1', 'key2'], callback);
-			setTimeout(() => {
-				expect(callback.calledTwice).to.be.true;
-				expect(callback.getCall(0).args[0]).to.be.undefined;
-				expect(callback.getCall(1).args[0]).to.eql([ { key: 'key1' }, { key: 'key2' }]);
+			mongoRepo.setByKeys([]).then( (rst) => {
+				expect(rst).to.be.undefined;
+				return mongoRepo.setByKeys(['key1', 'key2']);
+			}).then( () => {
+				expect(fakeCollection.insertMany.calledOnce).to.be.true;
+				expect(fakeCollection.insertMany.calledWith([{key: 'key1'},{key:'key2'}])).to.be.true;
 				done();
-			}, 0);
+			}).catch( (e) => {
+				console.error(e);
+				expect(true).to.be.false;
+			});
 		});
 	});
 
 	describe('dispose()', ()=>{
 		it('should dispose mongodb connection', (done)=>{
 			mongoRepo.db = fakeDb;
-
-			mongoRepo.dispose();
-			
-			setTimeout(() => {	
+			mongoRepo.dispose().then(() => {
 				expect(fakeDb.dropCollection.calledOnce).to.be.true;
 				expect(fakeDb.close.called).to.be.true;
 				done();
-			}, 0);
+			});
 		});
 
 		it('should close connection if error', (done)=>{
 			fakeDb.dropCollection = sinon.fake.rejects(new Error('fake error'));
 			mongoRepo.db = fakeDb;
 
-			mongoRepo.dispose();
-			setTimeout(() => {
+			mongoRepo.dispose().then(() => {
 				expect(fakeDb.dropCollection.calledOnce).to.be.true;
 				expect(fakeDb.close.calledOnce).to.be.true;
 				done();
-			}, 0);
+			}).catch( () => {
+				expect(fakeDb.close.calledOnce).to.be.true;
+				done();
+			});
 		});
 
 		it('should only close mongo connection', (done)=>{
 			fakeDb.dropCollection = sinon.spy();
 			mongoRepo.db = fakeDb;
 			mongoRepo.clearOnQuit = false;
-			mongoRepo.dispose();
-			
-			setTimeout(() => {
+			mongoRepo.dispose().then( () => {
 				expect(fakeDb.dropCollection.called).to.be.false;
 				expect(fakeDb.close.calledOnce).to.be.true;
 				done();
-			}, 0);
+			}).catch( () => {
+				expect(true).to.be.false;
+				done();
+			});
 		});
 	});
 
